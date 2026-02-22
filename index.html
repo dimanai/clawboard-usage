@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>爪爪鍵盤字根碼產生器</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#0f1117;--surface:#1a1d27;--surface2:#242836;--border:#2e3348;
+    --text:#e4e6f0;--text2:#9499b3;--accent:#6c7ee1;--accent-hover:#8490eb;
+    --success:#4ade80;--error:#f87171;--radius:12px;
+  }
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:var(--bg);color:var(--text);min-height:100vh;
+    display:flex;flex-direction:column;align-items:center;padding:2rem 1rem;
+  }
+  h1{font-size:1.75rem;font-weight:700;margin-bottom:.25rem}
+  .subtitle{color:var(--text2);font-size:.9rem;margin-bottom:2rem}
+  .container{width:100%;max-width:640px}
+
+  .format-selector{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:1.5rem}
+  .format-btn{
+    padding:1rem;border-radius:var(--radius);border:2px solid var(--border);
+    background:var(--surface);color:var(--text);cursor:pointer;
+    transition:all .2s;text-align:left;
+  }
+  .format-btn:hover{border-color:var(--accent);background:var(--surface2)}
+  .format-btn.active{border-color:var(--accent);background:rgba(108,126,225,.12)}
+  .format-btn strong{display:block;font-size:.95rem;margin-bottom:.25rem}
+  .format-btn span{font-size:.78rem;color:var(--text2);line-height:1.4}
+
+  .drop-zone{
+    border:2px dashed var(--border);border-radius:var(--radius);
+    padding:2.5rem 1.5rem;text-align:center;cursor:pointer;
+    transition:all .2s;background:var(--surface);margin-bottom:1rem;
+    position:relative;
+  }
+  .drop-zone:hover,.drop-zone.dragover{border-color:var(--accent);background:var(--surface2)}
+  .drop-zone p{color:var(--text2);font-size:.9rem;margin-top:.5rem}
+  .drop-zone .icon{font-size:2rem;margin-bottom:.5rem;display:block}
+  .drop-zone input[type=file]{
+    position:absolute;inset:0;opacity:0;cursor:pointer;
+  }
+
+  .file-info{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    padding:.75rem 1rem;margin-bottom:1rem;display:none;
+    font-size:.85rem;color:var(--text2);
+  }
+  .file-info.visible{display:flex;align-items:center;gap:.5rem}
+  .file-info .name{color:var(--text);font-weight:500;flex:1}
+  .file-info .size{color:var(--text2)}
+  .file-info .remove{
+    background:none;border:none;color:var(--error);cursor:pointer;
+    font-size:1.1rem;padding:0 .25rem;
+  }
+
+  .btn-primary{
+    width:100%;padding:.85rem;border:none;border-radius:var(--radius);
+    background:var(--accent);color:#fff;font-size:.95rem;font-weight:600;
+    cursor:pointer;transition:all .2s;margin-bottom:1rem;
+  }
+  .btn-primary:hover:not(:disabled){background:var(--accent-hover)}
+  .btn-primary:disabled{opacity:.4;cursor:not-allowed}
+
+  .output{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    padding:1rem;display:none;
+  }
+  .output.visible{display:block}
+  .output h3{font-size:.9rem;margin-bottom:.75rem;color:var(--text2)}
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:1rem}
+  .stat{
+    background:var(--surface2);border-radius:8px;padding:.6rem .75rem;
+  }
+  .stat .label{font-size:.72rem;color:var(--text2);text-transform:uppercase;letter-spacing:.5px}
+  .stat .value{font-size:1.1rem;font-weight:600;margin-top:.15rem}
+
+  .download-row{display:flex;gap:.5rem}
+  .btn-download{
+    flex:1;padding:.65rem;border:1px solid var(--border);border-radius:8px;
+    background:var(--surface2);color:var(--text);font-size:.85rem;
+    cursor:pointer;transition:all .2s;text-align:center;font-weight:500;
+  }
+  .btn-download:hover{border-color:var(--accent);background:rgba(108,126,225,.1)}
+
+  .log{
+    margin-top:1rem;background:var(--surface);border:1px solid var(--border);
+    border-radius:var(--radius);padding:.75rem;max-height:200px;overflow-y:auto;
+    font-family:"SF Mono",Monaco,Consolas,monospace;font-size:.78rem;
+    color:var(--text2);line-height:1.6;display:none;
+  }
+  .log.visible{display:block}
+  .log .error{color:var(--error)}
+  .log .success{color:var(--success)}
+
+  .progress-bar{
+    height:3px;background:var(--border);border-radius:2px;margin-bottom:1rem;
+    overflow:hidden;display:none;
+  }
+  .progress-bar.visible{display:block}
+  .progress-bar .fill{
+    height:100%;background:var(--accent);width:0%;
+    transition:width .3s ease;
+  }
+
+  .source-links{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    padding:.85rem 1rem;margin-bottom:1.5rem;font-size:.82rem;color:var(--text2);line-height:1.7;
+  }
+  .source-links p{margin-bottom:.35rem;font-weight:500;color:var(--text)}
+  .source-links ul{list-style:none;padding:0}
+  .source-links a{color:var(--accent);text-decoration:none;transition:color .2s}
+  .source-links a:hover{color:var(--accent-hover);text-decoration:underline}
+
+  .format-sample{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    margin-bottom:1.5rem;overflow:hidden;
+  }
+  .format-sample summary{
+    list-style:none;cursor:pointer;padding:.85rem 1rem;font-weight:600;color:var(--text);
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  .format-sample summary::-webkit-details-marker{display:none}
+  .format-sample summary::after{content:"▸";color:var(--text2);transition:transform .2s ease}
+  .format-sample[open] summary::after{transform:rotate(90deg)}
+  .format-sample .sample-content{padding:0 1rem 1rem}
+  .sample-grid{display:grid;grid-template-columns:1fr;gap:.75rem}
+  .sample-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:.7rem}
+  .sample-card h4{font-size:.82rem;margin-bottom:.45rem;color:var(--text2)}
+  .sample-card pre{
+    margin:0;white-space:pre-wrap;word-break:break-word;
+    font-family:"SF Mono",Monaco,Consolas,monospace;font-size:.76rem;line-height:1.55;color:var(--text)
+  }
+
+  footer{margin-top:3rem;color:var(--text2);font-size:.75rem;text-align:center}
+  footer a{color:var(--accent);text-decoration:none}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>爪爪鍵盤字根碼產生器</h1>
+  <p class="subtitle">選擇格式 → 匯入檔案 → 下載二進位碼表</p>
+
+  <div class="format-selector">
+    <button class="format-btn active" data-format="v1">
+      <strong>V1 格式</strong>
+      <span>字根碼來源檔（V1）<br>TAB 分隔 · BEGIN_TABLE / END_TABLE</span>
+    </button>
+    <button class="format-btn" data-format="v2">
+      <strong>V2 格式</strong>
+      <span>字根碼來源檔（V2）<br>空格分隔 · %chardef begin / end</span>
+    </button>
+  </div>
+
+  <div class="source-links">
+    <p>碼表來源檔案下載：</p>
+    <ul>
+      <li><strong>V1</strong>：<a href="https://github.com/jdh8/ibus-boshiamy/blob/master/boshiamy.txt" target="_blank" rel="noopener">V1 來源檔（TXT）</a></li>
+      <li><strong>V2</strong>：<a href="https://github.com/chinese-opendesktop/cin-tables/blob/master/boshiamy.cin" target="_blank" rel="noopener">V2 來源檔（CIN）</a></li>
+      <li><strong>關聯詞</strong>：<a href="https://boshiamy.com/download_tools.php#tab_tab5" target="_blank" rel="noopener">官方下載位置（tab5）</a></li>
+    </ul>
+  </div>
+
+  <details class="format-sample">
+    <summary>匯入檔案格式示意（點擊展開）</summary>
+    <div class="sample-content">
+      <div class="sample-grid">
+        <div class="sample-card">
+          <h4>V1 範例（TAB 分隔：字根[TAB]詞句[TAB]頻率）</h4>
+          <pre>a	對	99
+aa	寸	100
+aa	丶	99
+aaa	鑫	100
+aaa	龘	99
+aaa	鑆	98
+aab	鎯	100</pre>
+        </div>
+        <div class="sample-card">
+          <h4>V2 範例（空格分隔：字根[空格]詞句）</h4>
+          <pre>bxv 敝
+bxx 父
+bxy 陞
+by 墜
+bybp 凌
+bybp 陵
+bybpv 陵
+byby 陸
+bye 陸
+bye 隘</pre>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <div class="drop-zone" id="dropZone">
+    <input type="file" id="fileInput" accept=".txt,.cin">
+    <span class="icon">📂</span>
+    <strong>點擊或拖曳檔案至此</strong>
+    <p id="formatHint">支援 V1 字根碼檔（TAB 分隔格式）</p>
+  </div>
+
+  <div class="file-info" id="fileInfo">
+    <span class="name" id="fileName"></span>
+    <span class="size" id="fileSize"></span>
+    <button class="remove" id="removeFile" title="移除檔案">✕</button>
+  </div>
+
+  <div class="progress-bar" id="progressBar"><div class="fill" id="progressFill"></div></div>
+
+  <button class="btn-primary" id="buildBtn" disabled>產生碼表</button>
+
+  <div class="output" id="output">
+    <h3>產生結果</h3>
+    <div class="stats" id="stats"></div>
+    <div class="download-row" id="downloads"></div>
+  </div>
+
+  <div class="log" id="log"></div>
+</div>
+
+<footer>爪爪鍵盤字根碼工具 · 純前端處理，檔案不會上傳</footer>
+
+<script>
+"use strict";
+
+const MAGIC = new Uint8Array([66,79,83,72,73,65,77,89]); // "BOSHIAMY"
+const VERSION = 3;
+
+// ─── DOM ────────────────────────────────────────────
+const formatBtns = document.querySelectorAll(".format-btn");
+const dropZone = document.getElementById("dropZone");
+const fileInput = document.getElementById("fileInput");
+const fileInfoEl = document.getElementById("fileInfo");
+const fileNameEl = document.getElementById("fileName");
+const fileSizeEl = document.getElementById("fileSize");
+const removeFileBtn = document.getElementById("removeFile");
+const formatHint = document.getElementById("formatHint");
+const buildBtn = document.getElementById("buildBtn");
+const outputEl = document.getElementById("output");
+const statsEl = document.getElementById("stats");
+const downloadsEl = document.getElementById("downloads");
+const logEl = document.getElementById("log");
+const progressBar = document.getElementById("progressBar");
+const progressFill = document.getElementById("progressFill");
+
+let selectedFormat = "v1";
+let loadedFile = null;
+let loadedText = null;
+
+// ─── Format selector ────────────────────────────────
+formatBtns.forEach(btn => {
+  btn.addEventListener("click", () => {
+    formatBtns.forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    selectedFormat = btn.dataset.format;
+    formatHint.textContent = selectedFormat === "v1"
+      ? "支援 V1 字根碼檔（TAB 分隔格式）"
+      : "支援 V2 字根碼檔（空格分隔 %chardef 格式）";
+    resetOutput();
+  });
+});
+
+// ─── File handling ──────────────────────────────────
+dropZone.addEventListener("dragover", e => { e.preventDefault(); dropZone.classList.add("dragover"); });
+dropZone.addEventListener("dragleave", () => dropZone.classList.remove("dragover"));
+dropZone.addEventListener("drop", e => {
+  e.preventDefault();
+  dropZone.classList.remove("dragover");
+  if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener("change", () => {
+  if (fileInput.files.length) handleFile(fileInput.files[0]);
+});
+removeFileBtn.addEventListener("click", () => {
+  loadedFile = null;
+  loadedText = null;
+  fileInput.value = "";
+  fileInfoEl.classList.remove("visible");
+  buildBtn.disabled = true;
+  resetOutput();
+});
+
+function handleFile(file) {
+  loadedFile = file;
+  fileNameEl.textContent = file.name;
+  fileSizeEl.textContent = formatBytes(file.size);
+  fileInfoEl.classList.add("visible");
+  resetOutput();
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    loadedText = reader.result;
+    buildBtn.disabled = false;
+    log(`✓ 已載入 ${file.name}（${formatBytes(file.size)}）`, "success");
+  };
+  reader.onerror = () => log("讀取檔案失敗", "error");
+  reader.readAsText(file, "utf-8");
+}
+
+// ─── Build ──────────────────────────────────────────
+buildBtn.addEventListener("click", () => {
+  if (!loadedText) return;
+  resetOutput();
+  showProgress(0);
+
+  try {
+    const t0 = performance.now();
+
+    log("解析檔案...");
+    showProgress(10);
+    const raw = selectedFormat === "v1" ? parseBoshiamyV1(loadedText) : parseBoshiamyV2(loadedText);
+    log(`  原始列數: ${raw.length}`);
+    showProgress(30);
+
+    log("清理與去重...");
+    const rows = cleanRows(raw);
+    log(`  清理後列數: ${rows.length}`);
+    showProgress(50);
+
+    log("建構 Trie...");
+    const nodes = buildTrie(rows);
+    log(`  節點數: ${nodes.length}`);
+    showProgress(70);
+
+    log("產生二進位碼表...");
+    const { buffer, stats } = writeBinaryTable(nodes);
+    showProgress(90);
+
+    const csvBlob = generateCSV(rows);
+    const elapsed = ((performance.now() - t0) / 1000).toFixed(2);
+
+    log(`✓ 完成！耗時 ${elapsed}s，碼表大小 ${formatBytes(buffer.byteLength)}`, "success");
+    showProgress(100);
+
+    displayResults(stats, rows.length, nodes.length, buffer, csvBlob);
+  } catch (err) {
+    log(`✗ 錯誤: ${err.message}`, "error");
+    console.error(err);
+  }
+});
+
+// ─── V1 Parser: source v1 txt (TAB-separated) ───────
+function parseBoshiamyV1(text) {
+  const rows = [];
+  let inTable = false;
+
+  for (const line of text.split("\n")) {
+    const stripped = line.replace(/\r$/, "");
+    if (stripped === "BEGIN_TABLE") { inTable = true; continue; }
+    if (stripped === "END_TABLE") break;
+    if (!inTable || stripped.startsWith("###") || !stripped) continue;
+
+    const parts = stripped.split("\t");
+    if (parts.length < 3) continue;
+    const key = parts[0].trim();
+    const phrase = parts[1].trim();
+    const freqStr = parts[2].trim();
+    if (!key || !phrase || !/^\d+$/.test(freqStr)) continue;
+
+    const freq = Math.max(0, Math.min(255, parseInt(freqStr, 10)));
+    rows.push({ key, phrase: phrase.normalize("NFC"), freq });
+  }
+  return rows;
+}
+
+// ─── V2 Parser: source v2 cin (%chardef) ─────────
+function parseBoshiamyV2(text) {
+  const rows = [];
+  let inChardef = false;
+  const freqCounter = new Map();
+
+  for (const line of text.split("\n")) {
+    const stripped = line.replace(/\r$/, "");
+    if (stripped === "%chardef begin") { inChardef = true; continue; }
+    if (stripped === "%chardef end") break;
+    if (!inChardef || stripped.startsWith("#") || !stripped) continue;
+
+    const idx = stripped.indexOf(" ");
+    if (idx < 0) continue;
+    const key = stripped.slice(0, idx);
+    const phrase = stripped.slice(idx + 1);
+    if (!key || !phrase) continue;
+
+    const count = freqCounter.get(key) || 0;
+    const freq = Math.max(0, Math.min(255, 100 - count));
+    freqCounter.set(key, count + 1);
+
+    rows.push({ key, phrase: phrase.normalize("NFC"), freq });
+  }
+  return rows;
+}
+
+// ─── Clean rows ─────────────────────────────────────
+function cleanRows(raw) {
+  const merged = new Map();
+  for (const { key, phrase, freq } of raw) {
+    const pairKey = key + "\0" + phrase;
+    const prev = merged.get(pairKey);
+    if (prev === undefined || freq > prev.freq) {
+      merged.set(pairKey, { key, phrase, freq });
+    }
+  }
+  const rows = Array.from(merged.values());
+  rows.sort((a, b) => {
+    if (a.key < b.key) return -1;
+    if (a.key > b.key) return 1;
+    if (b.freq !== a.freq) return b.freq - a.freq;
+    if (a.phrase < b.phrase) return -1;
+    if (a.phrase > b.phrase) return 1;
+    return 0;
+  });
+  return rows;
+}
+
+// ─── Build Trie ─────────────────────────────────────
+function buildTrie(rows) {
+  const nodes = [{ children: new Map(), candidates: [] }];
+
+  for (const { key, phrase, freq } of rows) {
+    let nodeId = 0;
+    for (const ch of key) {
+      let nxt = nodes[nodeId].children.get(ch);
+      if (nxt === undefined) {
+        nxt = nodes.length;
+        nodes[nodeId].children.set(ch, nxt);
+        nodes.push({ children: new Map(), candidates: [] });
+      }
+      nodeId = nxt;
+    }
+    nodes[nodeId].candidates.push({ phrase, freq });
+  }
+
+  for (const node of nodes) {
+    if (node.candidates.length > 0) {
+      node.candidates.sort((a, b) => {
+        if (b.freq !== a.freq) return b.freq - a.freq;
+        if (a.phrase < b.phrase) return -1;
+        if (a.phrase > b.phrase) return 1;
+        return 0;
+      });
+    }
+  }
+  return nodes;
+}
+
+// ─── Write binary table ─────────────────────────────
+function writeBinaryTable(nodes) {
+  const encoder = new TextEncoder();
+  const states = [];
+  const edges = [];
+  const candidates = [];
+  const phraseChunks = [];
+  let phraseBlobLen = 0;
+
+  for (const node of nodes) {
+    const edgeStart = edges.length;
+    const orderedEdges = Array.from(node.children.entries()).sort((a, b) => a[0] < b[0] ? -1 : 1);
+    for (const [ch, nextState] of orderedEdges) {
+      edges.push({ charCode: ch.codePointAt(0), nextState });
+    }
+
+    const candStart = candidates.length;
+    for (const { phrase, freq } of node.candidates) {
+      const phraseBytes = encoder.encode(phrase);
+      const phraseOffset = phraseBlobLen;
+      phraseChunks.push(phraseBytes);
+      phraseBlobLen += phraseBytes.length;
+      if (phraseBytes.length > 65535) throw new Error("phrase byte length exceeds uint16 limit");
+      candidates.push({ phraseOffset, phraseLen: phraseBytes.length, freq });
+    }
+
+    states.push({
+      edgeStart,
+      edgeCount: orderedEdges.length,
+      candStart,
+      candCount: node.candidates.length,
+    });
+  }
+
+  const HEADER_SIZE = 28;
+  const STATE_SIZE = 16;
+  const EDGE_SIZE = 8;
+  const CAND_SIZE = 7;
+
+  const totalSize = HEADER_SIZE
+    + states.length * STATE_SIZE
+    + edges.length * EDGE_SIZE
+    + candidates.length * CAND_SIZE
+    + phraseBlobLen;
+
+  const buffer = new ArrayBuffer(totalSize);
+  const view = new DataView(buffer);
+  const u8 = new Uint8Array(buffer);
+  let offset = 0;
+
+  u8.set(MAGIC, 0); offset += 8;
+  view.setUint32(offset, VERSION, true); offset += 4;
+  view.setUint32(offset, states.length, true); offset += 4;
+  view.setUint32(offset, edges.length, true); offset += 4;
+  view.setUint32(offset, candidates.length, true); offset += 4;
+  view.setUint32(offset, phraseBlobLen, true); offset += 4;
+
+  for (const s of states) {
+    view.setUint32(offset, s.edgeStart, true); offset += 4;
+    view.setUint32(offset, s.edgeCount, true); offset += 4;
+    view.setUint32(offset, s.candStart, true); offset += 4;
+    view.setUint32(offset, s.candCount, true); offset += 4;
+  }
+
+  for (const e of edges) {
+    view.setUint32(offset, e.charCode, true); offset += 4;
+    view.setUint32(offset, e.nextState, true); offset += 4;
+  }
+
+  for (const c of candidates) {
+    view.setUint32(offset, c.phraseOffset, true); offset += 4;
+    view.setUint16(offset, c.phraseLen, true); offset += 2;
+    view.setUint8(offset, c.freq); offset += 1;
+  }
+
+  for (const chunk of phraseChunks) {
+    u8.set(chunk, offset);
+    offset += chunk.length;
+  }
+
+  return {
+    buffer,
+    stats: {
+      stateCount: states.length,
+      edgeCount: edges.length,
+      candidateCount: candidates.length,
+      phraseBlobBytes: phraseBlobLen,
+    },
+  };
+}
+
+// ─── CSV generation ─────────────────────────────────
+function generateCSV(rows) {
+  let csv = "input_keys,phrase,freq\n";
+  for (const { key, phrase, freq } of rows) {
+    const escapedPhrase = phrase.includes(",") || phrase.includes('"') || phrase.includes("\n")
+      ? '"' + phrase.replace(/"/g, '""') + '"'
+      : phrase;
+    const escapedKey = key.includes(",") || key.includes('"')
+      ? '"' + key.replace(/"/g, '""') + '"'
+      : key;
+    csv += `${escapedKey},${escapedPhrase},${freq}\n`;
+  }
+  return new Blob([csv], { type: "text/csv;charset=utf-8" });
+}
+
+// ─── UI helpers ─────────────────────────────────────
+function displayResults(stats, entryCount, nodeCount, binBuffer, csvBlob) {
+  outputEl.classList.add("visible");
+  const prefix = selectedFormat === "v2" ? "clawroot_v2" : "clawroot";
+
+  statsEl.innerHTML = [
+    ["詞條數", entryCount.toLocaleString()],
+    ["節點數", nodeCount.toLocaleString()],
+    ["邊數", stats.edgeCount.toLocaleString()],
+    ["候選數", stats.candidateCount.toLocaleString()],
+    ["片語 Blob", formatBytes(stats.phraseBlobBytes)],
+    ["碼表大小", formatBytes(binBuffer.byteLength)],
+  ].map(([label, value]) =>
+    `<div class="stat"><div class="label">${label}</div><div class="value">${value}</div></div>`
+  ).join("");
+
+  const binBlob = new Blob([binBuffer], { type: "application/octet-stream" });
+
+  downloadsEl.innerHTML = "";
+  downloadsEl.appendChild(makeDownloadBtn(`${prefix}_table.bin`, binBlob, "下載 .bin 碼表"));
+  downloadsEl.appendChild(makeDownloadBtn(`${prefix}_ios_ready.csv`, csvBlob, "下載 .csv"));
+}
+
+function makeDownloadBtn(filename, blob, label) {
+  const btn = document.createElement("button");
+  btn.className = "btn-download";
+  btn.textContent = label;
+  btn.addEventListener("click", () => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+  return btn;
+}
+
+function showProgress(pct) {
+  progressBar.classList.add("visible");
+  progressFill.style.width = pct + "%";
+  if (pct >= 100) setTimeout(() => progressBar.classList.remove("visible"), 600);
+}
+
+function resetOutput() {
+  outputEl.classList.remove("visible");
+  logEl.classList.remove("visible");
+  logEl.innerHTML = "";
+  progressBar.classList.remove("visible");
+  progressFill.style.width = "0%";
+}
+
+function log(msg, type) {
+  logEl.classList.add("visible");
+  const div = document.createElement("div");
+  if (type) div.className = type;
+  div.textContent = msg;
+  logEl.appendChild(div);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+function formatBytes(bytes) {
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1048576) return (bytes / 1024).toFixed(1) + " KB";
+  return (bytes / 1048576).toFixed(2) + " MB";
+}
+</script>
+</body>
+</html>
