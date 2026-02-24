@@ -108,12 +108,20 @@
 
   .source-links{
     background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
-    padding:.85rem 1rem;margin-bottom:1.5rem;font-size:.82rem;color:var(--text2);line-height:1.7;
+    padding:.85rem 1rem;margin-bottom:1rem;font-size:.82rem;color:var(--text2);line-height:1.7;
   }
   .source-links p{margin-bottom:.35rem;font-weight:500;color:var(--text)}
   .source-links ul{list-style:none;padding:0}
   .source-links a{color:var(--accent);text-decoration:none;transition:color .2s}
   .source-links a:hover{color:var(--accent-hover);text-decoration:underline}
+
+  .compliance-note{
+    background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.35);border-radius:var(--radius);
+    padding:.9rem 1rem;margin-bottom:1.5rem;font-size:.82rem;line-height:1.75;color:#f8caca;
+  }
+  .compliance-note strong{color:#ffd6d6}
+  .compliance-note ul{margin:.35rem 0 0 1.1rem}
+  .compliance-note li{margin:.15rem 0}
 
   .format-sample{
     background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
@@ -157,11 +165,21 @@
   </div>
 
   <div class="source-links">
-    <p>以嘸蝦米字碼為例</p>
+    <p>格式參考（第三方連結）</p>
     <ul>
-      <li><strong>V1</strong>：<a href="https://github.com/jdh8/ibus-boshiamy/blob/master/boshiamy.txt" target="_blank" rel="noopener">V1 來源檔（TXT）</a></li>
-      <li><strong>V2</strong>：<a href="https://github.com/chinese-opendesktop/cin-tables/blob/master/boshiamy.cin" target="_blank" rel="noopener">V2 來源檔（CIN）</a></li>
-      <li><strong>關聯詞</strong>：<a href="https://boshiamy.com/download_tools.php#tab_tab5" target="_blank" rel="noopener">下載位置</a></li>
+      <li><strong>V1 範例格式</strong>：<a href="https://github.com/jdh8/ibus-boshiamy/blob/master/boshiamy.txt" target="_blank" rel="noopener noreferrer">V1 參考檔（TXT）</a></li>
+      <li><strong>V2 範例格式</strong>：<a href="https://github.com/chinese-opendesktop/cin-tables/blob/master/boshiamy.cin" target="_blank" rel="noopener noreferrer">V2 參考檔（CIN）</a></li>
+      <li><strong>其他來源</strong>：<a href="https://boshiamy.com/download_tools.php#tab_tab5" target="_blank" rel="noopener noreferrer">相關網站（僅供自行查閱）</a></li>
+    </ul>
+  </div>
+
+  <div class="compliance-note">
+    <strong>版權與使用提醒</strong>
+    <ul>
+      <li>本工具僅提供檔案格式轉換，不內建、不提供任何第三方字根資料。</li>
+      <li>請只匯入你<strong>有合法授權或可合法使用</strong>的字根資料。</li>
+      <li>第三方連結僅作為格式教學參考，不代表本站擁有、授權或保證其內容權利狀態。</li>
+      <li>若資料涉及著作權、授權或其他權利，請先取得權利人同意後再使用。</li>
     </ul>
   </div>
 
