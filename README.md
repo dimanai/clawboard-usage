@@ -4,6 +4,8 @@
 
 無論是日常聊天、商務郵件或專業寫作，Clawboard 都能成為您最得力的輸入助手。
 
+想參與搶先版測試，可以到這裡填單 [link](https://docs.google.com/forms/d/e/1FAIpQLScZZqCf5SNZwIQxNg_U7IXcWmkEhK8fdZIu1UDnaQkwFHD0Jw/viewform?usp=header)
+
 ## 字根檔案產生
 
 以嘸蝦米字根為例，字根表格檔案（`clawroot_table.bin`）可透過以下網址產生：
